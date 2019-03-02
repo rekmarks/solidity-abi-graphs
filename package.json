@@ -1,0 +1,50 @@
+{
+  "name": "graphlib-solidity",
+  "version": "0.0.0",
+  "description": "Accepts Solidity ABIs, outputs graphlib representations of the entities therein.",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm run build && jest",
+    "clean": "rm -rf dist/*",
+    "transpile": "npx babel src -d dist --source-maps",
+    "build": "npm run clean && npm run transpile",
+    "prepare": "npm run test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rekmarks/graphlib-solidity.git"
+  },
+  "keywords": [
+    "solidity",
+    "graphs",
+    "graphlib",
+    "smart",
+    "contracts",
+    "ethereum",
+    "sol",
+    "graph"
+  ],
+  "author": "Erik Marks <rekmarks@protonmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/rekmarks/graphlib-solidity/issues"
+  },
+  "homepage": "https://github.com/rekmarks/graphlib-solidity#readme",
+  "devDependencies": {
+    "@babel/cli": "^7.2.3",
+    "@babel/core": "^7.3.4",
+    "@babel/plugin-transform-runtime": "^7.3.4",
+    "@babel/preset-env": "^7.3.4",
+    "babel-eslint": "^10.0.1",
+    "babel-jest": "^24.1.0",
+    "babel-preset-minify": "^0.5.0",
+    "eslint": "^5.14.1",
+    "eslint-plugin-jest": "^22.3.0",
+    "eslint-plugin-json": "^1.4.0",
+    "jest": "^24.1.0"
+  },
+  "dependencies": {
+    "@babel/runtime": "^7.3.4",
+    "graphlib": "^2.1.7"
+  }
+}
