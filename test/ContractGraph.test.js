@@ -5,9 +5,8 @@ import { contracts } from 'chain-end'
 
 import { ContractGraph } from '../index'
 
-const _gsMock = {
+const _gsDefaultMock = {
   id: expect.any(String),
-  Graph: expect.any(Object),
   edges: {
     ids: expect.any(Object),
     names: expect.any(Object),
@@ -23,13 +22,21 @@ describe('ContractGraph', () => {
 
   it('constructor instantiates object with expected properties', () => {
 
-    const g = new ContractGraph(contracts.BurnableMintableERC20)
+    let g = new ContractGraph(contracts.BurnableMintableERC20)
 
-    expect(g._gs).toMatchObject({
-      ..._gsMock,
+    const mock = {
+      ..._gsDefaultMock,
       contractName: 'BurnableMintableERC20',
       functionNodes: expect.any(Array),
       constructorNodeId: expect.any(String),
+    }
+
+    expect(g._gs).toMatchObject(mock)
+
+    g = new ContractGraph(contracts.BurnableMintableERC20, { graphlib: true })
+    expect(g._gs).toMatchObject({
+      ...mock,
+      Graph: expect.any(Object),
     })
   })
 })

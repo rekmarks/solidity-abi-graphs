@@ -4,15 +4,14 @@ import { Graph } from 'graphlib'
 import uuidv4 from 'uuid/v4'
 
 const graphlibOptions = { directed: true, compound: true, multigraph: false }
-const defaultOptions = { constructorOnly: false }
+const defaultOptions = { constructorOnly: false, graphlib: false }
 
 /**
  * Validates options passed to ContractGraph constructor. Throws on error.
  * @param {object} options the constructor options
  */
 function validateOptions (options) {
-  if (!options) throw new Error('Invalid options')
-  if (!options.hasOwnProperty('constructorOnly')) {
+  if (!options || typeof options !== 'object') {
     throw new Error('Invalid options')
   }
 }
@@ -55,12 +54,11 @@ export default class ContractGraph {
    * @param {object} artifact the Solidity compilation artifact to represent
    * @param {object} options optional options
    */
-  constructor (artifact, options = defaultOptions) {
+  constructor (artifact, options = {}) {
     validateOptions(options)
     validateArtifact(artifact)
     this._gs = {
       id: uuidv4(),
-      Graph: new Graph(graphlibOptions),
       edges: {
         ids: {},
         names: {},
@@ -69,7 +67,13 @@ export default class ContractGraph {
         ids: {},
         names: {},
       },
-      options,
+      options: {
+        ...defaultOptions,
+        ...options,
+      },
+    }
+    if (this._gs.options.graphlib) {
+      this._gs.Graph = new Graph(graphlibOptions)
     }
     parseContract(artifact, this)
   }
@@ -88,6 +92,11 @@ export default class ContractGraph {
    * Get whether this graph only contains the constructor node.
    */
   constructorOnly = () => this._gs.options.constructorOnly
+
+  /**
+   * Get whether this graph uses graphlib.
+   */
+  usesGraphlib = () => this._gs.options.graphlib
 
   /**
    * Get the name of the contract represented by this graph.
@@ -170,7 +179,7 @@ function parseContract (a, g) {
         })
       }
 
-      g._gs.Graph.setNode(id, node.name)
+      if (g.usesGraphlib()) g._gs.Graph.setNode(id, node.name)
 
       if (entry.type === 'constructor') g._gs.constructorNodeId = id
       else if (entry.type === 'function') {
@@ -195,7 +204,7 @@ function addChild (e, childId, parentId, nodeType, g, i = null) {
   }
   if (i !== null) childNode.order = i
 
-  g._gs.Graph.setParent(childId, parentId)
+  if (g.usesGraphlib()) g._gs.Graph.setParent(childId, parentId)
 
   g._gs.nodes.ids[childId] = childNode
 
