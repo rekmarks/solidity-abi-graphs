@@ -1,6 +1,6 @@
 {
   "name": "solidity-abi-graphs",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Turn Solidity compiler artifacts into graph objects.",
   "main": "index.js",
   "scripts": {
