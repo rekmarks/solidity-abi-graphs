@@ -17,8 +17,6 @@
     }
   },
 
-  "extends": ["plugin:react/recommended"],
-
   "env": {
     "es6": true,
     "node": true,
@@ -26,7 +24,6 @@
   },
 
   "plugins": [
-    "react",
     "json",
     "jest"
   ],
@@ -39,10 +36,6 @@
   },
 
   "settings": {
-    "react": {
-      "pragma": "React",
-      "version": "16.4.2"
-    }
   },
 
   "rules": {

@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "npm run build && jest",
+    "test-inspect": "node --inspect-brk ./node_modules/.bin/jest -i",
     "clean": "rm -rf dist/*",
     "transpile": "npx babel src -d dist --source-maps",
     "build": "npm run clean && npm run transpile",
@@ -33,11 +34,13 @@
   "devDependencies": {
     "@babel/cli": "^7.2.3",
     "@babel/core": "^7.3.4",
+    "@babel/plugin-proposal-class-properties": "^7.3.4",
     "@babel/plugin-transform-runtime": "^7.3.4",
     "@babel/preset-env": "^7.3.4",
     "babel-eslint": "^10.0.1",
     "babel-jest": "^24.1.0",
     "babel-preset-minify": "^0.5.0",
+    "chain-end": "^0.7.0",
     "eslint": "^5.14.1",
     "eslint-plugin-jest": "^22.3.0",
     "eslint-plugin-json": "^1.4.0",
@@ -45,6 +48,7 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.3.4",
-    "graphlib": "^2.1.7"
+    "graphlib": "^2.1.7",
+    "uuid": "^3.3.2"
   }
 }
