@@ -43,7 +43,9 @@ function validateArtifact (a) {
 
   // abi entities must have valid types
   a.abi.forEach(entry => {
-    if (!['constructor', 'function', 'event'].includes(entry.type)) {
+    if (![
+      'constructor', 'function', 'event', 'fallback',
+    ].includes(entry.type)) {
       throw new Error(
         'Parsing failure: Invalid abi entity type "' + entry.type +
         '" for entry: ' + JSON.stringify(entry)
@@ -152,13 +154,10 @@ function parseContract (a, g) {
 
   a.abi.forEach(entry => {
 
-    if (
-      entry.type !== 'event' && // ignore events for now
-      (
-        entry.type === 'constructor' ||
-        // ignore function nodes if this is a constructor-only graph
-        (entry.type === 'function' && !g.constructorOnly())
-      )
+    if ( // only handle constructor and function nodes
+      entry.type === 'constructor' ||
+      // ignore function nodes if this is a constructor-only graph
+      (entry.type === 'function' && !g.constructorOnly())
     ) {
 
       const id = uuidv4()
