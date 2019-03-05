@@ -58,7 +58,7 @@ export default class ContractGraph {
     validateOptions(options)
     validateArtifact(artifact)
     this._gs = {
-      id: uuidv4(),
+      id: options.id || uuidv4(),
       edges: {
         ids: {},
         names: {},
