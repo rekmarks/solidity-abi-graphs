@@ -44,7 +44,10 @@ function validateArtifact (a) {
   // abi entities must have valid types
   a.abi.forEach(entry => {
     if (!['constructor', 'function', 'event'].includes(entry.type)) {
-      throw new Error('Parsing failure: Invalid abi (invalid entity type)')
+      throw new Error(
+        'Parsing failure: Invalid abi entity type "' + entry.type +
+        '" for entry: ' + JSON.stringify(entry)
+      )
     }
   })
 }
