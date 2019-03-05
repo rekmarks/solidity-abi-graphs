@@ -4,7 +4,12 @@ import { Graph } from 'graphlib'
 import uuidv4 from 'uuid/v4'
 
 const graphlibOptions = { directed: true, compound: true, multigraph: false }
-const defaultOptions = { constructorOnly: false, graphlib: false }
+
+const defaultOptions = {
+  constructorOnly: false,
+  graphlib: false,
+  id: null,
+}
 
 /**
  * Validates options passed to ContractGraph constructor. Throws on error.
