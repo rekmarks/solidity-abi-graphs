@@ -1,7 +1,6 @@
 # misc
 .DS_Store
 .vscode
-dist
 
 # Logs
 logs
