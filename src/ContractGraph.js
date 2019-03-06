@@ -169,20 +169,18 @@ function parseContract (a, g) {
       }
 
       if (entry.inputs) {
-        node.inputs = []
-        entry.inputs.forEach((e, i) => {
+        node.inputs = entry.inputs.map((e, i) => {
           const childId = uuidv4()
           addChild(e, childId, id, 'input', g, i)
-          node.inputs.push(childId)
+          return childId
         })
       }
 
       if (entry.outputs) {
-        node.outputs = []
-        entry.outputs.forEach(e => {
+        node.outputs = entry.outputs.map(e => {
           const childId = uuidv4()
           addChild(e, childId, id, 'output', g)
-          node.outputs.push(childId)
+          return childId
         })
       }
 
