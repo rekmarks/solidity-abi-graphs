@@ -7,15 +7,19 @@ import { ContractGraph } from '../index'
 
 const _gsDefaultMock = {
   id: expect.any(String),
+  contractName: null,
+  options: expect.any(Object),
+  nodes: {
+    ids: expect.any(Object),
+    names: expect.any(Object),
+    constructorId: expect.any(String),
+    functionIds: expect.any(Array),
+  },
   edges: {
     ids: expect.any(Object),
     names: expect.any(Object),
   },
-  nodes: {
-    ids: expect.any(Object),
-    names: expect.any(Object),
-  },
-  options: expect.any(Object),
+  Graph: null,
 }
 
 describe('ContractGraph', () => {
@@ -27,8 +31,6 @@ describe('ContractGraph', () => {
     const mock = {
       ..._gsDefaultMock,
       contractName: 'BurnableMintableERC20',
-      functionNodes: expect.any(Array),
-      constructorNodeId: expect.any(String),
     }
 
     expect(g._gs).toMatchObject(mock)

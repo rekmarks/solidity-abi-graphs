@@ -6,8 +6,11 @@ import uuidv4 from 'uuid/v4'
 const graphlibOptions = { directed: true, compound: true, multigraph: false }
 
 const defaultOptions = {
+  // whether the graph only contains the constructor node
   constructorOnly: false,
+  // whether the graph should maintain a graphlib representation of itself
   graphlib: false,
+  // if not falsy, the graph will use this id
   id: null,
 }
 
@@ -65,27 +68,38 @@ export default class ContractGraph {
    * @param {object} options optional options
    */
   constructor (artifact, options = {}) {
+
     validateOptions(options)
     validateArtifact(artifact)
+
     this._gs = {
       id: options.id || uuidv4(),
-      edges: {
-        ids: {},
-        names: {},
-      },
-      nodes: {
-        ids: {},
-        names: {},
-      },
+      contractName: null,
       options: {
         ...defaultOptions,
         ...options,
       },
+      nodes: {
+        ids: {},
+        names: {},
+        functionIds: [],
+        constructorId: null,
+      },
+      edges: {
+        ids: {},
+        names: {},
+      },
     }
-    if (this._gs.options.graphlib) {
-      this._gs.Graph = new Graph(graphlibOptions)
-    }
+    this._gs.options.graphlib
+    ? this._gs.Graph = new Graph(graphlibOptions)
+    : this._gs.Graph = null
+
     parseContract(artifact, this)
+
+    // parsingpost-validation
+    if (!this.constructorNodeId()) {
+      throw new Error('Contract missing constructor.')
+    }
   }
 
   /**
@@ -109,6 +123,11 @@ export default class ContractGraph {
   usesGraphlib = () => this._gs.options.graphlib
 
   /**
+   * Get the internal graphlib graph, or null if !usesGraphlib.
+   */
+  graphlibGraph = () => this._gs.Graph
+
+  /**
    * Get the name of the contract represented by this graph.
    */
   contractName = () => this._gs.contractName
@@ -118,26 +137,76 @@ export default class ContractGraph {
    */
   constructorNode = () => {
     return {
-      ...this._gs.nodes.ids[this._gs.constructorNodeId],
+      ...this._gs.nodes.ids[this._gs.nodes.constructorId],
     }
   }
+
+  /**
+   * Gets the id of the constructor node associated with this graph.
+   */
+  constructorNodeId = () => this._gs.nodes.constructorId
+
+  /**
+   * Gets an array of the function nodes associated with this graph.
+   */
+  functionNodes = () => {
+    return Object.values(this._gs.nodes.functionIds).map(
+      id => this.nodeById(id))
+  }
+
+  /**
+   * Gets an array of the function node ids associated with this graph.
+   */
+  functionNodeIds = () => this._gs.nodes.functionIds
 
   /**
    * Get the node with the given id.
    */
   nodeById = id => {
-    return {
-      ...this._gs.nodes.ids[id],
-    }
+    return (
+      this._gs.nodes.ids[id]
+      ? { ...this._gs.nodes.ids[id] }
+      : null
+    )
   }
 
   /**
    * Get the node with the given name.
    */
   nodeByName = name => {
-    return {
-      ...this._gs.nodes.names[name],
-    }
+    return (
+      this._gs.nodes.names[name]
+      ? this.nodeById(this._gs.nodes.names[name])
+      : null
+    )
+  }
+
+  /**
+   * Get an array of the input nodes of the node with id.
+   */
+  inputNodes = id => {
+    if (!this.nodeById(id)) return null
+    return (
+      !this.nodeById(id).inputs
+      ? []
+      : Object.values(this.nodeById(id).inputs).map(
+        id => this.nodeById(id)
+      )
+    )
+  }
+
+  /**
+   * Get an array of the output nodes of the node with id.
+   */
+  outputNodes = id => {
+    if (!this.nodeById(id)) return null
+    return (
+      !this.nodeById(id).outputs
+      ? []
+      : Object.values(this.nodeById(id).outputs).map(
+        id => this.nodeById(id)
+      )
+    )
   }
 
   // getEdge = (source, target) => this._gs.edges[source + ':' + target]
@@ -160,6 +229,7 @@ function parseContract (a, g) {
       (entry.type === 'function' && !g.constructorOnly())
     ) {
 
+      // create node object
       const id = uuidv4()
       const node = {
         id,
@@ -168,30 +238,31 @@ function parseContract (a, g) {
         payable: entry.payable,
       }
 
+      // parse function inputs
       if (entry.inputs) {
-        node.inputs = []
-        entry.inputs.forEach((e, i) => {
+        node.inputs = entry.inputs.map((input, i) => {
           const childId = uuidv4()
-          addChild(e, childId, id, 'input', g, i)
-          node.inputs.push(childId)
+          addChild(input, childId, id, 'input', g, i)
+          return childId
         })
       }
 
+      // parse function outputs
       if (entry.outputs) {
-        node.outputs = []
-        entry.outputs.forEach(e => {
+        node.outputs = entry.outputs.map(output => {
           const childId = uuidv4()
-          addChild(e, childId, id, 'output', g)
-          node.outputs.push(childId)
+          addChild(output, childId, id, 'output', g)
+          return childId
         })
       }
 
+      // add node to graphlib Graph
       if (g.usesGraphlib()) g._gs.Graph.setNode(id, node.name)
 
-      if (entry.type === 'constructor') g._gs.constructorNodeId = id
+      // constructor and function-specific mappings
+      if (entry.type === 'constructor') g._gs.nodes.constructorId = id
       else if (entry.type === 'function') {
-        if (!g._gs.functionNodes) g._gs.functionNodes = []
-        g._gs.functionNodes.push(node)
+        g._gs.nodes.functionIds.push(id)
       }
 
       g._gs.nodes.ids[id] = node
@@ -200,20 +271,29 @@ function parseContract (a, g) {
   })
 }
 
-function addChild (e, childId, parentId, nodeType, g, i = null) {
+/**
+ * Adds an input or output node of parent with parentId to the graph g.
+ * @param {object} entry the abi input/output entry
+ * @param {string} id the id to use for this child node
+ * @param {string} parentId the id of the parent node
+ * @param {string} nodeType input or output
+ * @param {object} g the ContractGraph
+ * @param {number} i the abi index if an input (optional)
+ */
+function addChild (entry, id, parentId, nodeType, g, i = null) {
 
   const childNode = {
-    childId,
+    id,
     nodeType,
-    parent: parentId,
-    name: e.name,
-    dataType: e.type,
+    parentId,
+    name: entry.name,
+    solidityDataType: entry.type,
   }
-  if (i !== null) childNode.order = i
+  if (i) childNode.order = i
 
-  if (g.usesGraphlib()) g._gs.Graph.setParent(childId, parentId)
+  if (g.usesGraphlib()) g._gs.Graph.setParent(id, parentId)
 
-  g._gs.nodes.ids[childId] = childNode
+  g._gs.nodes.ids[id] = childNode
 
-  return childId
+  return id
 }
